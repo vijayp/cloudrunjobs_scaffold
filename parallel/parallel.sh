@@ -35,18 +35,18 @@ gcloud services enable \
     run.googleapis.com \
     cloudbuild.googleapis.com \
     containerregistry.googleapis.com
-
 gcloud auth configure-docker
 
 
-echo "setting up artifact repo"
+echo "setting up artifact repo at $DOCKER_REPO in $REGION"
+gcloud artifacts repositories describe $DOCKER_REPO --location=$REGION || \
+  gcloud artifacts repositories create $DOCKER_REPO --repository-format=docker \
+      --location=$REGION --description="Docker repository"
 
-gcloud artifacts repositories create $DOCKER_REPO --repository-format=docker \
-    --location=us-west2 --description="Docker repository"
 
-
-echo "Build sample into a container"
 IMAGE_NAME=gcr.io/$PROJECT_ID/$DOCKER_REPO/$DOCKER_IMAGE_NAME
+
+echo "Build this image into a container $IMAGE_NAME"
 gcloud builds submit --tag $IMAGE_NAME
 
 
@@ -60,10 +60,11 @@ gcloud builds submit --tag $IMAGE_NAME
 # gsutil cp $INPUT_FILE $INPUT_OBJECT
 
 # Delete job if it already exists.
-gcloud beta run jobs delete ${JOB_NAME} --quiet
+gcloud beta run jobs delete ${JOB_NAME} --quiet --region=$REGION
 
 echo "Creating ${JOB_NAME} using $IMAGE_NAME, $INPUT_OBJECT, in ${NUM_TASKS} tasks"
 gcloud beta run jobs create ${JOB_NAME} --execute-now \
     --image $IMAGE_NAME \
     --tasks $NUM_TASKS \
+    --region $REGION \
     --set-env-vars "STORAGE_PREFIX=$PROJECT_ID"
