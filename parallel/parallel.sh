@@ -23,11 +23,8 @@ DOCKER_REPO=$JOB_NAME
 DOCKER_IMAGE_NAME=image
 NUM_TASKS=10
 
-INPUT_FILE=input_file.txt
-
 echo "Configure gcloud to use $REGION for Cloud Run"
 gcloud config set run/region ${REGION}
-
 
 
 echo "Enabling required services"
